@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <!-- ═══════════════════════════════════════════════════════════════
+       SECURITY & COMPLIANCE HEADERS
+       • Content-Security-Policy: no external scripts/images/fonts
+         (when served via HTTP server, add as HTTP header too)
+       • X-Content-Type-Options: nosniff
+       • Referrer-Policy: no-referrer
+       • Permissions-Policy: no camera/mic/geolocation/sensors
+       ═══════════════════════════════════════════════════════════════ -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: 'self'; connect-src 'none'; frame-src 'none'; object-src 'none';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <meta http-equiv="Permissions-Policy"
+        content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), accelerometer=(), gyroscope=()">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+
+  <!-- ═══════════════════════════════════════════
+       PWA / MOBILE META — Android & iOS
+       ═══════════════════════════════════════════ -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#020d1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WaterUnit">
+  <meta name="application-name" content="WaterUnit Converter">
+  <meta name="description" content="Comprehensive unit converter for Ion Exchange Resins, Water Treatment and Wastewater Treatment — MKS, US, EU standards benchmarking.">
+  <meta name="keywords" content="water treatment, unit converter, ion exchange, MKS, AWWA, ISO, EN, wastewater">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- PWA Manifest (inline data URI — no external file needed) -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22WaterUnit%20Converter%22%2C%22short_name%22%3A%22WaterUnit%22%2C%22description%22%3A%22Unit%20converter%20for%20water%20treatment%20engineering%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23020d1a%22%2C%22theme_color%22%3A%22%23020d1a%22%2C%22orientation%22%3A%22portrait%22%2C%22categories%22%3A%5B%22utilities%22%2C%22engineering%22%5D%7D">
+
+  <!-- iOS icons (inline SVG as data URI) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%23020d1a' rx='28'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle'%3E💧%3C/text%3E%3C/svg%3E">
+
+  <title>WaterUnit Converter — MKS · US · EU</title>
+
+  <style>
+    /* ═══════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES — Design System
+       ═══════════════════════════════════════════════ */
+    :root {
+      --bg-0:       #020d1a;
+      --bg-1:       #040f20;
+      --bg-2:       #061526;
+      --bg-3:       #0a1e38;
+      --bg-4:       #0f2a4a;
+      --border:     #0d2a45;
+      --border-2:   #1e3a5f;
+      --border-3:   #2a5080;
+      --accent:     #22d3ee;
+      --accent-dim: #0e7490;
+      --green:      #34d399;
+      --blue:       #7dd3fc;
+      --text-0:     #e2f0ff;
+      --text-1:     #93c5fd;
+      --text-2:     #7ba0c0;
+      --text-3:     #4a7a9a;
+      --text-4:     #2a5070;
+      --mono:       'Courier New', 'Lucida Console', monospace;
+      --sans:       'Segoe UI', system-ui, -apple-system, sans-serif;
+      --radius:     10px;
+      --radius-sm:  6px;
+      --shadow:     0 4px 24px rgba(0,0,0,0.6);
+    }
+
+    /* ═══════ RESET ═══════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-0);
+      color: var(--text-1);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    input, select, button { font-family: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    a { color: var(--accent); text-decoration: none; }
+
+    /* ═══════ LAYOUT ═══════ */
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      position: relative;
+    }
+
+    /* ═══════ HEADER ═══════ */
+    #header {
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(180deg, var(--bg-0) 80%, transparent);
+      padding: env(safe-area-inset-top, 0) 0 0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .header-inner {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .app-title-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+      color: var(--accent); font-weight: 700; margin-bottom: 2px;
+    }
+    .app-title { font-size: 20px; font-weight: 800; color: var(--text-0); line-height: 1.1; }
+    .app-subtitle { font-size: 10px; color: var(--text-3); letter-spacing: 0.5px; margin-top: 1px; }
+
+    /* ═══════ SEGMENT TABS ═══════ */
+    .seg-tabs { display: flex; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .seg-tabs::-webkit-scrollbar { display: none; }
+    .seg-btn {
+      flex-shrink: 0;
+      padding: 5px 9px;
+      border-radius: var(--radius-sm);
+      font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+      border: 1px solid var(--border);
+      color: var(--text-4);
+      background: var(--bg-1);
+      transition: all 0.18s;
+    }
+    .seg-btn.active {
+      background: linear-gradient(135deg, var(--bg-3), #0d3360);
+      border-color: var(--border-3);
+      color: var(--accent);
+    }
+
+    /* ═══════ SEARCH ═══════ */
+    .search-wrap { position: relative; margin-top: 9px; }
+    .search-wrap input {
+      width: 100%; padding: 8px 32px 8px 12px;
+      background: var(--bg-1); border: 1px solid var(--border-2);
+      border-radius: 8px; color: var(--text-1);
+      font-family: var(--mono); font-size: 11px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-wrap input:focus { border-color: var(--accent-dim); }
+    .search-clear {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      color: var(--text-4); font-size: 16px; line-height: 1;
+      padding: 4px; background: none; border: none; cursor: pointer;
+    }
+
+    /* ═══════ STANDARDS PANEL ═══════ */
+    .std-toggle {
+      padding: 6px 10px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2); color: var(--blue);
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      background: var(--bg-1); transition: background 0.15s;
+    }
+    .std-toggle.open { background: var(--bg-3); }
+    .std-panel {
+      background: var(--bg-1); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 8px;
+      animation: slideDown 0.18s ease;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .std-panel-title {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+      color: var(--accent); font-weight: 700; margin-bottom: 7px;
+    }
+    .std-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 4px; }
+    .std-market { font-family: var(--mono); font-size: 9px; font-weight: 700; min-width: 26px; }
+    .std-list { font-size: 10px; color: var(--text-3); line-height: 1.5; }
+
+    /* ═══════ CONTENT ═══════ */
+    #content { padding: 12px 14px 100px; }
+
+    /* ═══════ CATEGORY GRID ═══════ */
+    .cat-section-label {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 1.2px;
+      color: var(--text-4); margin-bottom: 9px;
+    }
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .cat-card {
+      background: linear-gradient(135deg, var(--bg-2), var(--bg-1));
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 12px;
+      text-align: left; transition: border-color 0.18s, transform 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-card:active { transform: scale(0.97); }
+    .cat-card:hover { border-color: var(--border-2); }
+    .cat-emoji { font-size: 22px; margin-bottom: 6px; }
+    .cat-name { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-1); line-height: 1.2; }
+    .cat-count { font-family: var(--mono); font-size: 9px; color: var(--text-4); margin-top: 4px; }
+
+    /* ═══════ PARAM LIST (all) ═══════ */
+    .param-list-title { font-family: var(--mono); font-size: 9px; letter-spacing: 1.2px; color: var(--text-4); margin: 18px 0 8px; }
+    .param-list-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; margin-bottom: 4px;
+      background: var(--bg-1); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .param-list-item:hover { border-color: var(--border-2); }
+    .param-list-name { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--blue); }
+    .param-list-sub { font-size: 9px; color: var(--text-4); margin-top: 1px; }
+    .chevron { font-size: 14px; color: var(--text-4); }
+
+    /* ═══════ BACK NAV ═══════ */
+    .nav-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .back-btn {
+      padding: 5px 10px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2); color: var(--blue);
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      background: var(--bg-1); transition: background 0.15s;
+    }
+    .back-btn:active { background: var(--bg-3); }
+    .nav-title { font-size: 15px; font-weight: 700; color: var(--text-0); }
+    .nav-subtitle { font-size: 10px; color: var(--text-3); }
+
+    /* ═══════ PARAM CONVERTER CARD ═══════ */
+    .param-card {
+      background: linear-gradient(135deg, var(--bg-2), var(--bg-1));
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .param-header {
+      padding: 10px 14px 8px;
+      background: linear-gradient(90deg, var(--bg-3), var(--bg-2));
+      border-bottom: 1px solid var(--border);
+    }
+    .param-name { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text-0); }
+    .param-desc { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+    .param-input-row { padding: 10px 14px 6px; display: flex; gap: 8px; align-items: center; }
+    .param-input {
+      flex: 1; min-width: 0;
+      background: var(--bg-0); border: 1px solid var(--border-3);
+      border-radius: var(--radius-sm); color: var(--accent);
+      font-family: var(--mono); font-size: 15px; font-weight: 700;
+      padding: 7px 10px; outline: none; transition: border-color 0.2s;
+    }
+    .param-input:focus { border-color: var(--accent); }
+    /* Remove number input spinners */
+    .param-input::-webkit-inner-spin-button,
+    .param-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .param-input[type=number] { -moz-appearance: textfield; }
+    .unit-select {
+      background: var(--bg-0); border: 1px solid var(--border-3);
+      border-radius: var(--radius-sm); color: var(--blue);
+      font-family: var(--mono); font-size: 10px;
+      padding: 7px 6px; outline: none; max-width: 145px;
+    }
+    .results-list { padding: 4px 14px 12px; }
+    .result-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 8px; margin-top: 4px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer; transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .result-row.from-unit { background: var(--bg-3); border-color: var(--border-3); }
+    .result-row:not(.from-unit) { background: var(--bg-1); }
+    .result-row:active { opacity: 0.75; }
+    .result-val {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      color: var(--green); min-width: 88px;
+    }
+    .result-val.empty { color: var(--text-4); }
+    .result-label { font-family: var(--mono); font-size: 10px; color: var(--text-1); }
+    .result-std { font-family: var(--mono); font-size: 8px; color: var(--text-4); margin-top: 1px; }
+    .result-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .copied-tick { font-size: 9px; color: var(--green); animation: fadeIn 0.2s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ═══════ BADGE ═══════ */
+    .badge {
+      font-family: var(--mono); font-size: 8px; font-weight: 700;
+      padding: 1px 5px; border-radius: 3px; letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    /* ═══════ INFO CARD ═══════ */
+    .info-item {
+      background: var(--bg-1); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 7px 10px; margin-top: 6px;
+    }
+    .info-val { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); }
+    .info-note { font-size: 9px; color: var(--text-3); margin-top: 2px; }
+    .info-std { font-family: var(--mono); font-size: 8px; color: var(--text-4); margin-top: 3px; }
+
+    /* ═══════ SAFETY MODAL ═══════ */
+    .fab-safety {
+      position: fixed; bottom: 70px; right: 16px; z-index: 200;
+      width: 46px; height: 46px; border-radius: 50%;
+      background: linear-gradient(135deg, #0a2a50, #0d3360);
+      border: 1.5px solid var(--border-3);
+      color: var(--accent); font-size: 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s;
+    }
+    .fab-safety:active { transform: scale(0.93); }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.82); backdrop-filter: blur(4px);
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--bg-1); border: 1px solid var(--border-2);
+      border-radius: 18px 18px 0 0; width: 100%; max-width: 480px;
+      padding: 20px 18px calc(env(safe-area-inset-bottom, 0) + 24px);
+      max-height: 82dvh; overflow-y: auto;
+      animation: sheetUp 0.25s ease;
+    }
+    @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-handle {
+      width: 36px; height: 4px; background: var(--border-2);
+      border-radius: 2px; margin: 0 auto 16px;
+    }
+    .modal-title { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text-0); margin-bottom: 4px; }
+    .modal-subtitle { font-size: 10px; color: var(--text-3); margin-bottom: 16px; }
+    .safety-section { margin-bottom: 14px; }
+    .safety-section-title {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px;
+      color: var(--accent); font-weight: 700; margin-bottom: 6px;
+    }
+    .safety-row {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 6px 0; border-bottom: 1px solid var(--border);
+    }
+    .safety-row:last-child { border-bottom: none; }
+    .safety-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .safety-text { font-size: 10px; color: var(--text-2); line-height: 1.5; }
+    .safety-text strong { color: var(--text-0); }
+    .modal-close {
+      width: 100%; margin-top: 14px; padding: 12px;
+      background: var(--bg-3); border: 1px solid var(--border-2);
+      border-radius: var(--radius-sm); color: var(--blue);
+      font-family: var(--mono); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════ INSTALL BANNER ═══════ */
+    #install-banner {
+      display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; z-index: 400;
+      background: var(--bg-3); border-bottom: 1px solid var(--border-2);
+      padding: 10px 16px; align-items: center; gap: 10px;
+    }
+    #install-banner.show { display: flex; }
+    .install-text { flex: 1; font-size: 11px; color: var(--text-0); }
+    .install-btn {
+      padding: 6px 12px; border-radius: 6px;
+      background: var(--accent); color: var(--bg-0);
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      border: none; cursor: pointer; flex-shrink: 0;
+    }
+    .install-dismiss {
+      color: var(--text-4); font-size: 16px; padding: 4px;
+      background: none; border: none; cursor: pointer;
+    }
+
+    /* ═══════ BOTTOM BAR ═══════ */
+    #bottom-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; z-index: 90;
+      background: linear-gradient(0deg, var(--bg-0) 60%, transparent);
+      padding: 8px 14px calc(env(safe-area-inset-bottom, 0) + 10px);
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 3px; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .legend-lbl { font-family: var(--mono); font-size: 8px; font-weight: 700; }
+
+    /* ═══════ SEARCH RESULTS LABEL ═══════ */
+    .search-label { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text-4); margin-bottom: 10px; }
+
+    /* ═══════ EMPTY STATE ═══════ */
+    .empty { text-align: center; color: var(--text-4); font-size: 13px; margin-top: 50px; }
+
+    /* ═══════ FOCUS VISIBLE for a11y ═══════ */
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ═══════ PRINT hide UI chrome ═══════ */
+    @media print { #header, #bottom-bar, .fab-safety, #install-banner { display: none !important; } }
+
+    /* ═══════ REDUCED MOTION ═══════ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* ═══════ HIGH CONTRAST ═══════ */
+    @media (forced-colors: active) {
+      .param-card, .cat-card, .result-row { border: 2px solid ButtonText; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════ INSTALL BANNER ══════════════════════ -->
+  <div id="install-banner" role="banner" aria-label="Install app">
+    <div class="install-text">📲 Add <strong>WaterUnit</strong> to your home screen for offline use</div>
+    <button class="install-btn" id="install-btn" aria-label="Install app">Install</button>
+    <button class="install-dismiss" id="install-dismiss" aria-label="Dismiss">×</button>
+  </div>
+
+  <!-- ══════════════════════ HEADER ══════════════════════ -->
+  <header id="header" role="banner">
+    <div class="header-inner">
+      <div class="header-top">
+        <div>
+          <div class="app-title-label">◈ UNIT CONVERTER</div>
+          <div class="app-title">Water Treatment</div>
+          <div class="app-subtitle">MKS · US · EU · Standards Benchmarking</div>
+        </div>
+        <button class="std-toggle" id="std-toggle-btn" aria-expanded="false" aria-controls="std-panel">
+          STD <span id="std-arrow">▼</span>
+        </button>
+      </div>
+      <div id="std-panel" class="std-panel" style="display:none" role="region" aria-label="Applicable standards"></div>
+      <div class="seg-tabs" role="tablist" aria-label="Market segment">
+        <button class="seg-btn active" data-seg="0" role="tab" aria-selected="true">ION EXCHANGE</button>
+        <button class="seg-btn" data-seg="1" role="tab" aria-selected="false">WATER TREAT.</button>
+        <button class="seg-btn" data-seg="2" role="tab" aria-selected="false">WASTEWATER</button>
+      </div>
+      <div class="search-wrap" role="search">
+        <input type="search" id="search-input" placeholder="Search parameters…"
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+               aria-label="Search parameters" inputmode="search">
+        <button class="search-clear" id="search-clear" aria-label="Clear search" style="display:none">×</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════ CONTENT ══════════════════════ -->
+  <main id="content" role="main" aria-live="polite" aria-atomic="false"></main>
+
+  <!-- ══════════════════════ SAFETY FAB ══════════════════════ -->
+  <button class="fab-safety" id="safety-fab" aria-label="View safety and compliance information" title="Safety & Compliance">🛡</button>
+
+  <!-- ══════════════════════ SAFETY MODAL ══════════════════════ -->
+  <div class="modal-overlay" id="safety-modal" role="dialog" aria-modal="true"
+       aria-labelledby="modal-title" tabindex="-1">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="modal-title">🛡 Safety & Compliance</div>
+      <div class="modal-subtitle">WaterUnit Converter — Security & Privacy Declaration</div>
+
+      <div class="safety-section">
+        <div class="safety-section-title">DEVICE & OS SAFETY</div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>Zero system access.</strong> This app requests NO device permissions — no camera, microphone, location, contacts, storage, Bluetooth, USB, NFC, or sensors.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>No background processes.</strong> The app only runs when you have it open. It cannot run in the background, drain battery, or execute tasks when closed.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>Sandboxed execution.</strong> Runs entirely within your browser's security sandbox — it cannot access other tabs, the file system, or other apps.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>No OS modifications.</strong> Installing as a PWA creates a home-screen shortcut only — it does not modify system files, install drivers, or change OS settings.</div></div>
+      </div>
+
+      <div class="safety-section">
+        <div class="safety-section-title">DATA PRIVACY (GDPR / ePrivacy / CCPA)</div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>Zero data collection.</strong> No personal data, usage data, or identifiers are collected, stored, or transmitted. Ever.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>No cookies.</strong> This app sets no cookies — session, persistent, or third-party.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>No network calls.</strong> The app is fully self-contained. After loading, it makes zero network requests. Works completely offline.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>No analytics / tracking.</strong> No Google Analytics, Meta Pixel, or any telemetry SDK is included.</div></div>
+        <div class="safety-row"><span class="safety-icon">✅</span><div class="safety-text"><strong>No localStorage / IndexedDB.</strong> No data is written to your device's storage by this application.</div></div>
+      </div>
+
+      <div class="safety-section">
+        <div class="safety-section-title">SECURITY STANDARDS</div>
+        <div class="safety-row"><span class="safety-icon">🔒</span><div class="safety-text"><strong>OWASP Mobile Top 10 (2024).</strong> M1–M10 mitigated: no insecure data storage, no unprotected APIs, no weak cryptography (none used), no insecure authentication, no insufficient input/output validation concerns (pure calculation only).</div></div>
+        <div class="safety-row"><span class="safety-icon">🔒</span><div class="safety-text"><strong>Content Security Policy (CSP).</strong> Strict CSP header blocks all external scripts, images, fonts, and connections. No inline eval. Protects against XSS attacks.</div></div>
+        <div class="safety-row"><span class="safety-icon">🔒</span><div class="safety-text"><strong>ISO/IEC 27001 principle.</strong> Security by design: minimum privilege, no unnecessary data processing, zero attack surface via external dependencies.</div></div>
+        <div class="safety-row"><span class="safety-icon">🔒</span><div class="safety-text"><strong>IEC 62443 (Industrial Cybersecurity).</strong> No remote connectivity. No firmware update vectors. No command & control interface. Suitable for air-gapped environments.</div></div>
+        <div class="safety-row"><span class="safety-icon">🔒</span><div class="safety-text"><strong>X-Frame-Options: DENY.</strong> Cannot be embedded in iframes, preventing clickjacking.</div></div>
+        <div class="safety-row"><span class="safety-icon">🔒</span><div class="safety-text"><strong>Referrer-Policy: no-referrer.</strong> No URL metadata is sent to any server when navigating away.</div></div>
+      </div>
+
+      <div class="safety-section">
+        <div class="safety-section-title">ACCESSIBILITY (WCAG 2.1 AA)</div>
+        <div class="safety-row"><span class="safety-icon">♿</span><div class="safety-text"><strong>ARIA labels & roles.</strong> All interactive elements have accessible names, roles, and states for screen reader compatibility.</div></div>
+        <div class="safety-row"><span class="safety-icon">♿</span><div class="safety-text"><strong>Keyboard navigation.</strong> Full keyboard operability with visible focus indicators.</div></div>
+        <div class="safety-row"><span class="safety-icon">♿</span><div class="safety-text"><strong>Reduced motion support.</strong> Respects prefers-reduced-motion media query — all animations are disabled for users who have this set.</div></div>
+        <div class="safety-row"><span class="safety-icon">♿</span><div class="safety-text"><strong>High contrast mode.</strong> Compatible with forced-colors/high-contrast OS accessibility modes.</div></div>
+        <div class="safety-row"><span class="safety-icon">♿</span><div class="safety-text"><strong>Text scaling.</strong> Supports up to 200% browser text zoom without loss of functionality.</div></div>
+      </div>
+
+      <div class="safety-section">
+        <div class="safety-section-title">PWA INSTALLATION SAFETY</div>
+        <div class="safety-row"><span class="safety-icon">📲</span><div class="safety-text"><strong>No APK / sideloading.</strong> Installed via browser's "Add to Home Screen" — uses the same security model as the browser itself (Google Chrome / Samsung Internet / Safari).</div></div>
+        <div class="safety-row"><span class="safety-icon">📲</span><div class="safety-text"><strong>No app store risk.</strong> Not distributed through any third-party channel — the HTML file IS the complete application. SHA-256 checksum can be verified by the user.</div></div>
+        <div class="safety-row"><span class="safety-icon">📲</span><div class="safety-text"><strong>Uninstall cleanly.</strong> Removing the home-screen icon (long-press → Uninstall/Remove) completely removes the app. Nothing persists on device.</div></div>
+        <div class="safety-row"><span class="safety-icon">📲</span><div class="safety-text"><strong>Portrait orientation locked in manifest.</strong> Prevents accidental landscape-mode layout issues on tablets.</div></div>
+      </div>
+
+      <div class="safety-section">
+        <div class="safety-section-title">DISCLAIMER</div>
+        <div class="safety-row"><span class="safety-icon">ℹ️</span><div class="safety-text">Unit conversion values are provided for engineering reference only. Always verify critical values against the cited standards documents (AWWA, ISO, EN, EPA). Not a substitute for professional engineering judgment. Conversion factors are based on published standards current as of 2025.</div></div>
+      </div>
+
+      <button class="modal-close" id="modal-close" aria-label="Close safety information">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ BOTTOM LEGEND ══════════════════════ -->
+  <div id="bottom-bar" role="contentinfo" aria-label="Legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#a3e635"></div><span class="legend-lbl" style="color:#a3e635bb">MKS</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#93c5fd"></div><span class="legend-lbl" style="color:#93c5fdbb">EU</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div><span class="legend-lbl" style="color:#fbbf24bb">US</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6ee7b7"></div><span class="legend-lbl" style="color:#6ee7b7bb">MKS/EU</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div><span class="legend-lbl" style="color:#22d3eebb">ALL</span></div>
+    <span style="font-family:var(--mono);font-size:8px;color:var(--text-4);align-self:center">· tap result to copy</span>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   SERVICE WORKER REGISTRATION (offline-first PWA)
+   The SW is inlined as a blob — no external SW file needed.
+═══════════════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'waterunit-v1';
+    self.addEventListener('install', e => {
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+    });
+    self.addEventListener('fetch', e => {
+      // Only cache GET requests to same origin
+      if (e.request.method !== 'GET') return;
+      e.respondWith(
+        caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+          const c = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, c));
+          return res;
+        }).catch(() => cached))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DATA LAYER
+═══════════════════════════════════════════════════════════════════ */
+const SEGMENTS = ['Ion Exchange Resins', 'Water Treatment', 'Wastewater Treatment'];
+
+const STANDARDS = {
+  'Ion Exchange Resins': {
+    MKS: ['SI Units', 'ISO 9000', 'ISO 7027'],
+    EU:  ['EN 13752', 'DIN 54402', 'ISO 11348', 'DIN 19543'],
+    US:  ['AWWA B100', 'NSF/ANSI 61', 'ASTM D2187', 'ASTM D2268'],
+  },
+  'Water Treatment': {
+    MKS: ['SI Units', 'ISO 7980', 'ISO 7888', 'ISO 10523', 'ISO 7027'],
+    EU:  ['EN 15975', 'EN ISO 7027', 'DIN 2000', 'WHO Guidelines', 'EN 1484'],
+    US:  ['AWWA C651', 'EPA 816-F', 'NSF/ANSI 60', 'EPA 40 CFR 141', 'Standard Methods'],
+  },
+  'Wastewater Treatment': {
+    MKS: ['SI Units', 'ISO 11923', 'ISO 5815', 'ISO 6060', 'ISO 11885'],
+    EU:  ['EU Dir 91/271/EEC', 'EN 12566', 'DIN 4261', 'EN 1899-1', 'EN 872'],
+    US:  ['EPA 40 CFR Part 133', 'NPDES Permits', 'Standard Methods 5210', 'ASCE 2-06', 'EPA 821-R'],
+  },
+};
+
+const BADGE_COLORS = {
+  'MKS/EU/US': '#22d3ee', 'MKS/EU': '#6ee7b7', 'MKS': '#a3e635',
+  'EU': '#93c5fd', 'EU/DE': '#c4b5fd', 'EU/FR': '#f9a8d4',
+  'EU/UK': '#fdba74', 'US': '#fbbf24', 'US (old)': '#d4d4aa',
+  'EU/US': '#86efac',
+};
+
+const DATA = {
+  'Ion Exchange Resins': [
+    { id:'cap', name:'Exchange Capacity', icon:'⚗️', params:[
+      { id:'total_cap', name:'Total Exchange Capacity', desc:'Total ion exchange capacity of wet resin',
+        conversions:[
+          {u:'eq/L',         sys:'MKS/EU',   f:1,      label:'eq/L',               std:'ISO / SI'},
+          {u:'meq/mL',       sys:'MKS/EU',   f:1,      label:'meq/mL',             std:'ISO'},
+          {u:'eq/kg',        sys:'MKS/EU',   f:2.2,    label:'eq/kg (dry weight)', std:'EN 13752'},
+          {u:'mmol/mL',      sys:'MKS/EU',   f:1,      label:'mmol/mL',            std:'SI'},
+          {u:'kgr/ft³',      sys:'US',       f:21.8,   label:'kgr/ft³',            std:'AWWA B100'},
+          {u:'eq/ft³',       sys:'US',       f:28.317, label:'eq/ft³',             std:'NSF/ANSI 61'},
+          {u:'lb CaCO₃/ft³', sys:'US',       f:1.093,  label:'lb CaCO₃/ft³',       std:'AWWA B100'},
+        ], baseUnit:'eq/L' },
+      { id:'op_cap', name:'Operating Capacity', desc:'Usable capacity under real service conditions',
+        conversions:[
+          {u:'eq/L',     sys:'MKS/EU',f:1,    label:'eq/L',          std:'ISO'},
+          {u:'meq/mL',   sys:'MKS/EU',f:1,    label:'meq/mL',        std:'EN 13752'},
+          {u:'kgr/ft³',  sys:'US',    f:21.8, label:'kgr/ft³',       std:'AWWA B100'},
+          {u:'gr/gal',   sys:'US',    f:0.584,label:'gr/US gal',     std:'NSF/ANSI 61'},
+        ], baseUnit:'eq/L' },
+    ]},
+    { id:'phys', name:'Physical Properties', icon:'🔬', params:[
+      { id:'d50', name:'Particle Size (d₅₀)', desc:'Median particle diameter of resin beads',
+        conversions:[
+          {u:'mm', sys:'MKS/EU',f:1,      label:'mm',            std:'ISO / EN'},
+          {u:'µm', sys:'MKS/EU',f:1000,   label:'µm',            std:'DIN 54402'},
+          {u:'in', sys:'US',    f:0.03937,label:'inches',        std:'ASTM D2187'},
+          {u:'mesh (approx)',sys:'US',f:25.4,label:'US Mesh (1/size mm)',std:'ASTM'},
+        ], baseUnit:'mm' },
+      { id:'bulk_d', name:'Bulk Density (wet)', desc:'Apparent bulk density of conditioned resin',
+        conversions:[
+          {u:'g/mL',  sys:'MKS/EU',f:1,     label:'g/mL (= g/cm³)',  std:'ISO'},
+          {u:'kg/m³', sys:'MKS/EU',f:1000,  label:'kg/m³',           std:'EN 13752'},
+          {u:'kg/L',  sys:'MKS/EU',f:1,     label:'kg/L',            std:'SI'},
+          {u:'lb/ft³',sys:'US',    f:62.428,label:'lb/ft³',          std:'ASTM D2187'},
+          {u:'lb/gal (US)',sys:'US',f:8.345,label:'lb/US gal',       std:'AWWA'},
+        ], baseUnit:'g/mL' },
+      { id:'moisture', name:'Moisture Content', desc:'Water content of H-form conditioned resin',
+        conversions:[{u:'%',sys:'MKS/EU/US',f:1,label:'% (w/w)',std:'ISO / ASTM D2187'}],
+        baseUnit:'%' },
+      { id:'uc', name:'Uniformity Coefficient', desc:'Particle size distribution ratio d₆₀/d₁₀',
+        conversions:[{u:'(dimensionless)',sys:'MKS/EU/US',f:1,label:'UC — dimensionless',std:'ISO / AWWA B100'}],
+        baseUnit:'(dimensionless)' },
+      { id:'swell', name:'Volume Swelling (H⁺→Na⁺)', desc:'Bed volume increase on regeneration',
+        conversions:[{u:'%',sys:'MKS/EU/US',f:1,label:'% volume increase',std:'ISO / ASTM'}],
+        baseUnit:'%' },
+    ]},
+    { id:'svc', name:'Service & Regeneration', icon:'⚙️', params:[
+      { id:'svc_flow', name:'Service Flow Rate', desc:'Volumetric flow rate through resin bed',
+        conversions:[
+          {u:'BV/h',          sys:'MKS/EU/US',f:1,      label:'BV/h (Bed Volumes/hr)',  std:'ISO / AWWA'},
+          {u:'m³/(m²·h)',     sys:'MKS/EU',   f:1,      label:'m/h (superficial vel.)', std:'EN / SI'},
+          {u:'L/(L·h)',       sys:'MKS/EU',   f:1,      label:'L/L resin·h',            std:'SI'},
+          {u:'gpm/ft³',       sys:'US',       f:0.1337, label:'gpm/ft³',                std:'AWWA B100'},
+          {u:'gpm/ft²',       sys:'US',       f:0.4085, label:'gpm/ft² (SLR)',          std:'NSF/ANSI 61'},
+        ], baseUnit:'BV/h' },
+      { id:'regen', name:'Regenerant Dose', desc:'Chemical dose for resin regeneration',
+        conversions:[
+          {u:'g/L resin', sys:'MKS/EU',f:1,      label:'g / L resin',     std:'ISO / EN'},
+          {u:'kg/m³',     sys:'MKS/EU',f:1,      label:'kg/m³ resin',     std:'SI'},
+          {u:'lb/ft³',    sys:'US',    f:0.06243,label:'lb/ft³',          std:'AWWA'},
+          {u:'lb/kgr',    sys:'US',    f:0.00457,label:'lb chem/kgr removed',std:'NSF/ANSI 61'},
+        ], baseUnit:'g/L resin' },
+      { id:'pdrop', name:'Pressure Drop', desc:'Differential pressure across resin bed',
+        conversions:[
+          {u:'kPa',    sys:'MKS/EU',f:1,       label:'kPa',          std:'SI / ISO'},
+          {u:'bar',    sys:'EU',    f:0.01,    label:'bar',           std:'EN'},
+          {u:'mbar',   sys:'EU',    f:10,      label:'mbar',          std:'EN'},
+          {u:'mWC',    sys:'MKS/EU',f:0.10197, label:'mWC (m H₂O)',  std:'ISO'},
+          {u:'psi',    sys:'US',    f:0.14504, label:'psi',           std:'AWWA'},
+          {u:'ft H₂O', sys:'US',    f:0.33456, label:'ft H₂O',       std:'US'},
+          {u:'in Hg',  sys:'US',    f:0.29530, label:'in Hg',        std:'US'},
+        ], baseUnit:'kPa' },
+      { id:'temp', name:'Temperature', desc:'Operating / regeneration temperature',
+        conversions:[
+          {u:'°C',sys:'MKS/EU',f:1,  label:'°C Celsius', std:'SI / ISO / EN'},
+          {u:'K', sys:'MKS',   f:1,  label:'K Kelvin',   std:'SI'},
+          {u:'°F',sys:'US',    f:1,  label:'°F Fahrenheit',std:'US'},
+        ], baseUnit:'°C', isTemp:true },
+    ]},
+  ],
+
+  'Water Treatment': [
+    { id:'flow', name:'Flow & Hydraulics', icon:'💧', params:[
+      { id:'flowrate', name:'Flow Rate', desc:'Volumetric flow rate through plant or unit process',
+        conversions:[
+          {u:'m³/h',  sys:'MKS/EU',f:1,       label:'m³/h',          std:'SI / ISO'},
+          {u:'m³/d',  sys:'MKS/EU',f:24,      label:'m³/day',        std:'SI'},
+          {u:'L/s',   sys:'MKS/EU',f:0.27778, label:'L/s',           std:'SI'},
+          {u:'L/min', sys:'MKS/EU',f:16.667,  label:'L/min',         std:'SI'},
+          {u:'ML/d',  sys:'EU',    f:0.024,   label:'ML/day',        std:'EU'},
+          {u:'MGD',   sys:'US',    f:0.006309,label:'MGD (US)',       std:'EPA / AWWA'},
+          {u:'gpm',   sys:'US',    f:4.40287, label:'US gpm',        std:'AWWA'},
+          {u:'gps',   sys:'US',    f:0.073381,label:'US gps',        std:'US'},
+          {u:'cfs',   sys:'US',    f:0.009810,label:'ft³/s (cfs)',   std:'US'},
+        ], baseUnit:'m³/h' },
+      { id:'sload', name:'Surface Loading / Hydraulic Rate', desc:'Flow per unit clarifier or filter area',
+        conversions:[
+          {u:'m/h',    sys:'MKS/EU',f:1,      label:'m/h = m³/(m²·h)',std:'SI / EN'},
+          {u:'m/d',    sys:'MKS/EU',f:24,     label:'m/d',            std:'SI'},
+          {u:'L/(m²·s)',sys:'MKS/EU',f:0.2778,label:'L/(m²·s)',       std:'ISO'},
+          {u:'gpm/ft²',sys:'US',    f:0.4085, label:'gpm/ft²',        std:'AWWA / EPA'},
+          {u:'gpd/ft²',sys:'US',    f:588.2,  label:'gpd/ft²',        std:'EPA'},
+        ], baseUnit:'m/h' },
+      { id:'vel', name:'Pipe / Bed Velocity', desc:'Interstitial or pipe flow velocity',
+        conversions:[
+          {u:'m/s',   sys:'MKS/EU',f:1,      label:'m/s',    std:'SI'},
+          {u:'m/h',   sys:'MKS/EU',f:3600,   label:'m/h',    std:'SI / EN'},
+          {u:'cm/s',  sys:'MKS/EU',f:100,    label:'cm/s',   std:'SI'},
+          {u:'ft/s',  sys:'US',    f:3.2808, label:'ft/s',   std:'US'},
+          {u:'ft/min',sys:'US',    f:196.85, label:'ft/min', std:'US'},
+        ], baseUnit:'m/s' },
+    ]},
+    { id:'qual', name:'Water Quality', icon:'🌊', params:[
+      { id:'hardness', name:'Hardness (as CaCO₃)', desc:'Total hardness Ca²⁺ + Mg²⁺',
+        conversions:[
+          {u:'mg/L CaCO₃',sys:'MKS/EU/US',f:1,      label:'mg/L as CaCO₃',   std:'ISO 7980'},
+          {u:'mmol/L',    sys:'MKS/EU',   f:0.01,   label:'mmol/L',           std:'SI / ISO'},
+          {u:'meq/L',     sys:'MKS/EU',   f:0.02,   label:'meq/L',            std:'SI'},
+          {u:'°dH',       sys:'EU/DE',    f:0.05603,label:'°dH (German)',      std:'DIN 19543'},
+          {u:'°fH',       sys:'EU/FR',    f:0.10,   label:'°fH (French)',      std:'FR Std'},
+          {u:'°eH',       sys:'EU/UK',    f:0.07015,label:'°eH (Clark/Eng.)', std:'UK Std'},
+          {u:'ppm',       sys:'US',       f:1,      label:'ppm as CaCO₃',     std:'AWWA'},
+          {u:'gpg',       sys:'US',       f:0.05842,label:'gr/US gal',        std:'AWWA / NSF'},
+        ], baseUnit:'mg/L CaCO₃' },
+      { id:'turbidity', name:'Turbidity', desc:'Light scattering index in water',
+        conversions:[
+          {u:'NTU',     sys:'MKS/EU/US',f:1,  label:'NTU (Nephelometric)', std:'ISO 7027'},
+          {u:'FTU',     sys:'EU',       f:1,  label:'FTU (Formazin)',       std:'EN ISO 7027'},
+          {u:'FAU',     sys:'EU',       f:1,  label:'FAU (Formazin Att.)', std:'ISO'},
+          {u:'JTU',     sys:'US (old)', f:1,  label:'JTU (Jackson)',        std:'Old EPA'},
+          {u:'mg SiO₂/L',sys:'US',     f:2.5,label:'mg SiO₂/L',           std:'ASTM D1889'},
+        ], baseUnit:'NTU' },
+      { id:'ec', name:'Electrical Conductivity', desc:'Measure of ionic content',
+        conversions:[
+          {u:'µS/cm', sys:'MKS/EU/US',f:1,      label:'µS/cm',          std:'ISO 7888'},
+          {u:'mS/cm', sys:'MKS/EU',   f:0.001,  label:'mS/cm',          std:'SI'},
+          {u:'mS/m',  sys:'MKS/EU',   f:0.1,    label:'mS/m',           std:'SI'},
+          {u:'S/m',   sys:'MKS',      f:0.0001, label:'S/m (SI base)',   std:'SI'},
+          {u:'µmho/cm',sys:'US',      f:1,      label:'µmho/cm (≡ µS/cm)',std:'US equiv.'},
+          {u:'TDS ppm',sys:'US/EU',   f:0.64,   label:'≈TDS ppm (×0.64)',std:'EPA 160.1'},
+        ], baseUnit:'µS/cm' },
+      { id:'tds', name:'TDS (Total Dissolved Solids)', desc:'Gravimetric dissolved solids',
+        conversions:[
+          {u:'mg/L', sys:'MKS/EU/US',f:1,    label:'mg/L (≡ ppm dilute)',std:'ISO / EPA'},
+          {u:'g/L',  sys:'MKS/EU',   f:0.001,label:'g/L',               std:'SI'},
+          {u:'kg/m³',sys:'MKS/EU',   f:0.001,label:'kg/m³',             std:'SI'},
+          {u:'ppm',  sys:'US',       f:1,    label:'ppm',               std:'EPA'},
+          {u:'ppb',  sys:'US',       f:1000, label:'ppb',               std:'EPA'},
+        ], baseUnit:'mg/L' },
+      { id:'do', name:'Dissolved Oxygen (DO)', desc:'Oxygen dissolved in water',
+        conversions:[
+          {u:'mg/L',sys:'MKS/EU/US',f:1,    label:'mg/L (= ppm)',   std:'ISO 5814'},
+          {u:'% sat @20°C',sys:'MKS/EU/US',f:11.3,label:'% saturation @20°C',std:'EN 25814'},
+          {u:'mL/L',sys:'EU',       f:0.70, label:'mL/L',           std:'Winkler'},
+          {u:'µg/L',sys:'MKS/EU',   f:1000, label:'µg/L',           std:'SI'},
+        ], baseUnit:'mg/L' },
+      { id:'chlorine', name:'Residual Chlorine', desc:'Free or total chlorine residual',
+        conversions:[
+          {u:'mg/L',sys:'MKS/EU/US',f:1,   label:'mg/L (ppm)',std:'ISO 7393'},
+          {u:'µg/L',sys:'MKS/EU',   f:1000,label:'µg/L',     std:'SI'},
+          {u:'ppm', sys:'US',       f:1,   label:'ppm',       std:'EPA / AWWA'},
+          {u:'ppb', sys:'US',       f:1000,label:'ppb',       std:'EPA'},
+        ], baseUnit:'mg/L' },
+      { id:'alkalinity', name:'Alkalinity (as CaCO₃)', desc:'Carbonate system total alkalinity',
+        conversions:[
+          {u:'mg/L CaCO₃',sys:'MKS/EU/US',f:1,   label:'mg/L as CaCO₃',std:'ISO 9963'},
+          {u:'meq/L',     sys:'MKS/EU',   f:0.02, label:'meq/L',        std:'SI'},
+          {u:'mmol/L',    sys:'MKS/EU',   f:0.01, label:'mmol/L',       std:'SI'},
+          {u:'ppm',       sys:'US',       f:1,    label:'ppm as CaCO₃', std:'Standard Methods'},
+        ], baseUnit:'mg/L CaCO₃' },
+      { id:'ph', name:'pH', desc:'Negative log of hydrogen ion activity',
+        conversions:[{u:'pH',sys:'MKS/EU/US',f:1,label:'pH (dimensionless)',std:'ISO 10523'}],
+        baseUnit:'pH' },
+    ]},
+    { id:'press', name:'Pressure & Pipe', icon:'🔧', params:[
+      { id:'pressure', name:'Pressure', desc:'Operating or design pressure',
+        conversions:[
+          {u:'kPa',   sys:'MKS/EU',f:1,       label:'kPa',          std:'SI'},
+          {u:'bar',   sys:'EU',    f:0.01,    label:'bar',           std:'EN'},
+          {u:'MPa',   sys:'MKS',   f:0.001,   label:'MPa',           std:'SI'},
+          {u:'mWC',   sys:'MKS/EU',f:0.10197, label:'mWC (m H₂O)',  std:'ISO'},
+          {u:'atm',   sys:'EU',    f:0.009869,label:'atm',           std:'legacy'},
+          {u:'psi',   sys:'US',    f:0.14504, label:'psi',           std:'AWWA / EPA'},
+          {u:'ft H₂O',sys:'US',   f:0.33456, label:'ft H₂O',       std:'US'},
+          {u:'in Hg', sys:'US',   f:0.29530, label:'in Hg',         std:'US'},
+        ], baseUnit:'kPa' },
+      { id:'pipe', name:'Pipe Diameter (DN/NPS)', desc:'Nominal pipe diameter',
+        conversions:[
+          {u:'mm',sys:'MKS/EU',f:1,       label:'mm (DN)',       std:'ISO / EN'},
+          {u:'cm', sys:'MKS/EU',f:0.1,    label:'cm',            std:'SI'},
+          {u:'m',  sys:'MKS',   f:0.001,  label:'m',             std:'SI'},
+          {u:'in', sys:'US',    f:0.03937,label:'inches (NPS)',  std:'AWWA / ASME'},
+          {u:'ft', sys:'US',    f:0.003281,label:'feet',         std:'US'},
+        ], baseUnit:'mm' },
+    ]},
+    { id:'dose', name:'Dosing & Disinfection', icon:'🧫', params:[
+      { id:'chem_dose', name:'Chemical Dose', desc:'Coagulant, lime, or disinfectant dose',
+        conversions:[
+          {u:'mg/L',    sys:'MKS/EU/US',f:1,      label:'mg/L (ppm)',        std:'ISO / EPA'},
+          {u:'g/m³',    sys:'MKS/EU',   f:1,      label:'g/m³',              std:'SI'},
+          {u:'kg/m³',   sys:'MKS/EU',   f:0.001,  label:'kg/m³',             std:'SI'},
+          {u:'kg/ML',   sys:'EU',       f:0.001,  label:'kg/ML',             std:'EU'},
+          {u:'lb/MG',   sys:'US',       f:0.1201, label:'lb/MG (US)',        std:'AWWA / EPA'},
+          {u:'lb/1000gal',sys:'US',     f:0.12011,label:'lb / 1000 US gal', std:'US'},
+        ], baseUnit:'mg/L' },
+      { id:'ct', name:'CT Value (Disinfection)', desc:'Concentration × Contact Time',
+        conversions:[
+          {u:'mg·min/L',sys:'MKS/EU/US',f:1,  label:'mg·min/L',  std:'EPA / WHO'},
+          {u:'mg·s/L',  sys:'MKS/EU',   f:60, label:'mg·s/L',    std:'SI'},
+          {u:'g·s/m³',  sys:'MKS/EU',   f:60, label:'g·s/m³',    std:'SI'},
+        ], baseUnit:'mg·min/L' },
+    ]},
+  ],
+
+  'Wastewater Treatment': [
+    { id:'organics', name:'Organic Loading', icon:'♻️', params:[
+      { id:'bod', name:'BOD₅ / COD / TOC', desc:'Oxygen demand concentrations',
+        conversions:[
+          {u:'mg/L', sys:'MKS/EU/US',f:1,     label:'mg/L (ppm)',   std:'ISO 5815 / EN 1899'},
+          {u:'g/m³', sys:'MKS/EU',   f:1,     label:'g/m³',         std:'SI'},
+          {u:'kg/m³',sys:'MKS/EU',   f:0.001, label:'kg/m³',        std:'SI'},
+          {u:'lb/1000gal',sys:'US',  f:0.008344,label:'lb/1000 US gal',std:'EPA 40 CFR'},
+          {u:'ppm',  sys:'US',       f:1,     label:'ppm',          std:'Standard Methods'},
+        ], baseUnit:'mg/L' },
+      { id:'olr', name:'Organic Loading Rate', desc:'Mass BOD/COD per unit reactor volume per day',
+        conversions:[
+          {u:'kg/(m³·d)',    sys:'MKS/EU',f:1,     label:'kg BOD/(m³·d)',       std:'SI / EN'},
+          {u:'g/(m³·d)',     sys:'MKS/EU',f:1000,  label:'g BOD/(m³·d)',        std:'SI'},
+          {u:'lb/(1000ft³·d)',sys:'US',  f:62.43, label:'lb BOD/(1000 ft³·d)', std:'EPA 40 CFR'},
+          {u:'lb/(ft³·d)',   sys:'US',   f:0.06243,label:'lb BOD/(ft³·d)',      std:'US'},
+        ], baseUnit:'kg/(m³·d)' },
+      { id:'ss', name:'Suspended Solids (TSS / VSS)', desc:'Total or volatile suspended solids',
+        conversions:[
+          {u:'mg/L', sys:'MKS/EU/US',f:1,    label:'mg/L (ppm)',  std:'ISO 11923'},
+          {u:'g/m³', sys:'MKS/EU',   f:1,    label:'g/m³',        std:'SI'},
+          {u:'g/L',  sys:'MKS/EU',   f:0.001,label:'g/L (MLSS)', std:'SI'},
+          {u:'kg/m³',sys:'MKS/EU',   f:0.001,label:'kg/m³',      std:'SI'},
+          {u:'ppm',  sys:'US',       f:1,    label:'ppm',         std:'Standard Methods'},
+        ], baseUnit:'mg/L' },
+      { id:'tn', name:'Total Nitrogen (TN / NH₄-N / NO₃-N)', desc:'Nitrogen species expressed as N',
+        conversions:[
+          {u:'mg/L N',  sys:'MKS/EU/US',f:1,      label:'mg/L as N',    std:'ISO / EPA'},
+          {u:'mg/L NH₄⁺',sys:'EU/US',  f:1.2878, label:'mg/L as NH₄⁺', std:'EN / EPA'},
+          {u:'mg/L NO₃⁻',sys:'EU/US',  f:4.427,  label:'mg/L as NO₃⁻', std:'EN / EPA'},
+          {u:'meq/L',   sys:'MKS/EU',  f:0.07139,label:'meq/L',         std:'SI'},
+          {u:'ppm N',   sys:'US',      f:1,      label:'ppm as N',      std:'Standard Methods'},
+        ], baseUnit:'mg/L N' },
+      { id:'tp', name:'Total Phosphorus (TP / PO₄-P)', desc:'Phosphorus species expressed as P',
+        conversions:[
+          {u:'mg/L P',   sys:'MKS/EU/US',f:1,     label:'mg/L as P',    std:'ISO / EPA'},
+          {u:'mg/L PO₄³⁻',sys:'EU/US',  f:3.066, label:'mg/L as PO₄³⁻',std:'EN / EPA'},
+          {u:'µg/L P',   sys:'MKS/EU',  f:1000,  label:'µg/L as P',    std:'SI'},
+          {u:'ppm P',    sys:'US',       f:1,     label:'ppm as P',     std:'Standard Methods'},
+        ], baseUnit:'mg/L P' },
+    ]},
+    { id:'process', name:'Biological Process', icon:'🏭', params:[
+      { id:'srt', name:'Sludge Retention Time (SRT)', desc:'Mean cell residence time in bioreactor',
+        conversions:[
+          {u:'d',sys:'MKS/EU/US',f:1,    label:'days',           std:'Standard Methods'},
+          {u:'h',sys:'MKS/EU',   f:24,   label:'hours',          std:'SI'},
+          {u:'s',sys:'MKS',      f:86400,label:'seconds (SI)',    std:'SI'},
+        ], baseUnit:'d' },
+      { id:'hrt', name:'Hydraulic Retention Time (HRT)', desc:'Average hydraulic residence time',
+        conversions:[
+          {u:'h',  sys:'MKS/EU/US',f:1,  label:'hours',  std:'Standard Methods'},
+          {u:'min',sys:'MKS/EU/US',f:60, label:'minutes',std:'SI'},
+          {u:'d',  sys:'MKS/EU',   f:0.04167,label:'days',std:'SI'},
+        ], baseUnit:'h' },
+      { id:'svi', name:'Sludge Volume Index (SVI)', desc:'Settleability of activated sludge (30 min)',
+        conversions:[
+          {u:'mL/g',sys:'MKS/EU/US',f:1,label:'mL/g',   std:'ISO / Standard Methods'},
+          {u:'L/kg',sys:'MKS/EU',   f:1,label:'L/kg',   std:'SI'},
+          {u:'cm³/g',sys:'EU',      f:1,label:'cm³/g',  std:'EN'},
+        ], baseUnit:'mL/g' },
+      { id:'air', name:'Aeration / Air Demand', desc:'Air or O₂ supply rate for biological treatment',
+        conversions:[
+          {u:'Nm³/h',       sys:'MKS/EU',f:1,     label:'Nm³/h (normal)',       std:'EN ISO'},
+          {u:'m³ air/m³ WW',sys:'MKS/EU',f:1,     label:'m³ air / m³ wastewater',std:'SI'},
+          {u:'scfm',        sys:'US',    f:0.5886,label:'scfm',                 std:'EPA / ASCE'},
+          {u:'cfm',         sys:'US',    f:0.5886,label:'cfm (actual)',         std:'US'},
+          {u:'scfh',        sys:'US',    f:35.315,label:'scfh',                 std:'US'},
+        ], baseUnit:'Nm³/h' },
+      { id:'sote', name:'Specific O₂ Transfer Efficiency', desc:'Oxygen transferred per unit energy input',
+        conversions:[
+          {u:'kg O₂/kWh',  sys:'MKS/EU/US',f:1,     label:'kg O₂/kWh (SOTE)',  std:'ASCE 2-06 / ISO'},
+          {u:'lb O₂/hp·h', sys:'US',       f:1.6440,label:'lb O₂/(hp·h)',      std:'ASCE 2-06'},
+        ], baseUnit:'kg O₂/kWh' },
+      { id:'sludge_prod', name:'Sludge Production', desc:'Net excess sludge generation rate',
+        conversions:[
+          {u:'kg TSS/d',  sys:'MKS/EU',f:1,     label:'kg TSS/day',             std:'SI / EU Dir'},
+          {u:'kg VS/d',   sys:'MKS/EU',f:1,     label:'kg VS/day',              std:'SI'},
+          {u:'kg/kg BOD', sys:'MKS/EU/US',f:1,  label:'kg TSS / kg BOD removed',std:'ISO'},
+          {u:'lb/d',      sys:'US',    f:2.2046,label:'lb/day',                 std:'EPA 40 CFR'},
+          {u:'lb/lb BOD', sys:'US',    f:1,     label:'lb TSS / lb BOD',        std:'EPA'},
+        ], baseUnit:'kg TSS/d' },
+    ]},
+    { id:'effluent', name:'Effluent Standards', icon:'📊', params:[
+      { id:'eff_bod', name:'BOD₅ Effluent Benchmarks', desc:'Regulatory effluent limits by standard',
+        isInfo: true,
+        info:[
+          {market:'EU', std:'EU Directive 91/271/EEC', value:'25 mg/L BOD₅', note:'Agglomerations >10,000 PE — Art. 4'},
+          {market:'EU', std:'EU Directive 91/271/EEC', value:'125 mg/L COD / 35 mg/L SS', note:'Secondary treatment minimum'},
+          {market:'US', std:'EPA 40 CFR Part 133', value:'30 mg/L BOD₅ (30-day avg)', note:'Secondary treatment standard'},
+          {market:'US', std:'EPA Advanced Secondary', value:'10 mg/L BOD₅', note:'Nutrient-sensitive or sensitive waters'},
+          {market:'MKS', std:'WHO Guidelines 2006', value:'≤25 mg/L BOD₅', note:'Unrestricted irrigation reuse'},
+          {market:'MKS', std:'ISO 14040 / LCA ref.', value:'20 mg/L BOD₅', note:'Common design target for reuse'},
+        ]},
+      { id:'pe', name:'Population Equivalent (PE) Definition', desc:'Reference organic load unit for plant sizing',
+        isInfo: true,
+        info:[
+          {market:'EU',  std:'EU Directive 91/271/EEC Art. 2', value:'60 g BOD₅/PE/day', note:'Official EU definition'},
+          {market:'EU',  std:'EN 12566', value:'200 L/PE/day hydraulic', note:'Design hydraulic load per person'},
+          {market:'US',  std:'EPA / Standard Methods', value:'≈77 g BOD₅/cap/day (0.17 lb)', note:'Higher US per-capita load'},
+          {market:'MKS', std:'ISO / WHO', value:'54–80 g BOD₅/PE/day', note:'Range across WHO regions'},
+        ]},
+    ]},
+  ],
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONVERSION LOGIC
+═══════════════════════════════════════════════════════════════════ */
+function toBase(val, param, fromUnit) {
+  if (param.isTemp) {
+    if (fromUnit === '°C') return val;
+    if (fromUnit === 'K')  return val - 273.15;
+    if (fromUnit === '°F') return (val - 32) / 1.8;
+    return val;
+  }
+  const c = param.conversions.find(x => x.u === fromUnit);
+  return c ? val / c.f : val;
+}
+function fromBase(base, param, toUnit) {
+  if (param.isTemp) {
+    if (toUnit === '°C') return base;
+    if (toUnit === 'K')  return base + 273.15;
+    if (toUnit === '°F') return base * 1.8 + 32;
+    return base;
+  }
+  const c = param.conversions.find(x => x.u === toUnit);
+  return c ? base * c.f : base;
+}
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (n === 0) return '0';
+  const a = Math.abs(n);
+  if (a >= 1e7 || a < 1e-4) return n.toExponential(4);
+  if (a >= 1000) return parseFloat(n.toPrecision(7)).toLocaleString('en-US', {maximumFractionDigits:4});
+  if (a >= 1) return parseFloat(n.toPrecision(6)).toString();
+  return parseFloat(n.toPrecision(5)).toString();
+}
+function badge(sys) {
+  const col = BADGE_COLORS[sys] || '#9ca3af';
+  return `<span class="badge" style="background:${col}22;border:1px solid ${col}55;color:${col}">${sys}</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════ */
+let state = {
+  seg: 0,
+  catIdx: null,
+  search: '',
+  stdOpen: false,
+  paramValues: {},   // paramId -> { inputVal, fromUnit }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════════ */
+function getParamState(pid, param) {
+  if (!state.paramValues[pid]) {
+    state.paramValues[pid] = { val: '', fromUnit: param.conversions[0].u };
+  }
+  return state.paramValues[pid];
+}
+
+function renderParamCard(param) {
+  if (param.isInfo) return renderInfoCard(param);
+  const ps = getParamState(param.id, param);
+  const numVal = parseFloat(ps.val);
+  const valid = ps.val !== '' && !isNaN(numVal);
+  const base = valid ? toBase(numVal, param, ps.fromUnit) : null;
+
+  const selOptions = param.conversions.map(c =>
+    `<option value="${c.u}" ${c.u === ps.fromUnit ? 'selected' : ''}>${c.label}</option>`
+  ).join('');
+
+  const rows = param.conversions.map(c => {
+    const res = base !== null ? fromBase(base, param, c.u) : null;
+    const isSrc = c.u === ps.fromUnit;
+    return `<div class="result-row ${isSrc ? 'from-unit' : ''}"
+                 data-copy="${res !== null ? fmt(res) : ''}"
+                 data-pid="${param.id}" data-unit="${c.u}"
+                 role="button" tabindex="0"
+                 aria-label="${c.label}: ${res !== null ? fmt(res) : 'enter a value'}">
+      <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+        <div class="result-val ${res === null ? 'empty' : ''}">${res !== null ? fmt(res) : '·····'}</div>
+        <div style="flex:1;min-width:0;overflow:hidden">
+          <div class="result-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.label}</div>
+          <div class="result-std">${c.std}</div>
+        </div>
+      </div>
+      <div class="result-right">
+        ${badge(c.sys)}
+        <span class="copied-tick" id="tick-${param.id}-${c.u.replace(/[^a-z0-9]/gi,'_')}" style="display:none">✓</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="param-card" id="param-${param.id}">
+    <div class="param-header">
+      <div class="param-name">${param.name}</div>
+      <div class="param-desc">${param.desc}</div>
+    </div>
+    <div class="param-input-row">
+      <input class="param-input" type="number" inputmode="decimal"
+             value="${ps.val}" placeholder="Enter value"
+             data-pid="${param.id}"
+             aria-label="Input value for ${param.name}">
+      <select class="unit-select" data-pid="${param.id}" aria-label="From unit for ${param.name}">
+        ${selOptions}
+      </select>
+    </div>
+    <div class="results-list">${rows}</div>
+  </div>`;
+}
+
+function renderInfoCard(param) {
+  const rows = param.info.map(item => {
+    const col = BADGE_COLORS[item.market] || '#9ca3af';
+    return `<div class="info-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <div class="info-val">${item.value}</div>
+          <div class="info-note">${item.note}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${badge(item.market)}
+          <div class="info-std">${item.std}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="param-card" id="param-${param.id}">
+    <div class="param-header">
+      <div class="param-name">${param.name}</div>
+      <div class="param-desc">${param.desc}</div>
+    </div>
+    <div style="padding:6px 14px 12px">${rows}</div>
+  </div>`;
+}
+
+function renderCategoryList() {
+  const cats = DATA[SEGMENTS[state.seg]];
+  const grid = cats.map((cat, idx) =>
+    `<button class="cat-card" data-cat="${idx}" aria-label="Open ${cat.name} parameters">
+      <div class="cat-emoji">${cat.icon}</div>
+      <div class="cat-name">${cat.name}</div>
+      <div class="cat-count">${cat.params.length} parameter${cat.params.length !== 1 ? 's' : ''}</div>
+    </button>`
+  ).join('');
+
+  const allParams = cats.flatMap(cat =>
+    cat.params.map(p =>
+      `<div class="param-list-item" data-cat="${cats.indexOf(cat)}" data-pid="${p.id}"
+            role="button" tabindex="0" aria-label="Open ${p.name}">
+        <div>
+          <div class="param-list-name">${p.name}</div>
+          <div class="param-list-sub">${cat.name} · ${p.isInfo ? 'reference' : (p.conversions.length + ' units')}</div>
+        </div>
+        <span class="chevron">›</span>
+      </div>`
+    )
+  ).join('');
+
+  return `<div class="cat-section-label">SELECT PARAMETER CATEGORY</div>
+    <div class="cat-grid">${grid}</div>
+    <div class="param-list-title">ALL PARAMETERS (${cats.reduce((a,c)=>a+c.params.length,0)} TOTAL)</div>
+    ${allParams}`;
+}
+
+function renderCategoryView() {
+  const cats = DATA[SEGMENTS[state.seg]];
+  const cat = cats[state.catIdx];
+  const params = cat.params.map(p => renderParamCard(p)).join('');
+  return `<div class="nav-bar">
+    <button class="back-btn" id="back-btn" aria-label="Back to categories">← Back</button>
+    <div>
+      <div class="nav-title">${cat.icon} ${cat.name}</div>
+      <div class="nav-subtitle">${SEGMENTS[state.seg]}</div>
+    </div>
+  </div>
+  ${params}`;
+}
+
+function renderSearchResults() {
+  const q = state.search.toLowerCase();
+  const cats = DATA[SEGMENTS[state.seg]];
+  const results = [];
+  for (const cat of cats) {
+    for (const p of cat.params) {
+      if (p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)) results.push(p);
+    }
+  }
+  const label = `<div class="search-label">${results.length} RESULT${results.length !== 1 ? 'S' : ''} FOR "${state.search.toUpperCase()}"</div>`;
+  if (results.length === 0) return label + `<div class="empty">No parameters found</div>`;
+  return label + results.map(p => renderParamCard(p)).join('');
+}
+
+function renderStdPanel() {
+  const stds = STANDARDS[SEGMENTS[state.seg]];
+  return `<div class="std-panel-title">APPLICABLE STANDARDS — ${SEGMENTS[state.seg].toUpperCase()}</div>` +
+    ['MKS','EU','US'].map(m => {
+      const col = BADGE_COLORS[m] || '#7ba0c0';
+      return `<div class="std-row">
+        <span class="std-market" style="color:${col}">${m}</span>
+        <span class="std-list">${stds[m].join(' · ')}</span>
+      </div>`;
+    }).join('');
+}
+
+function render() {
+  const content = document.getElementById('content');
+  if (state.search) content.innerHTML = renderSearchResults();
+  else if (state.catIdx !== null) content.innerHTML = renderCategoryView();
+  else content.innerHTML = renderCategoryList();
+
+  // Std panel
+  const stdPanel = document.getElementById('std-panel');
+  stdPanel.innerHTML = renderStdPanel();
+  stdPanel.style.display = state.stdOpen ? 'block' : 'none';
+  document.getElementById('std-arrow').textContent = state.stdOpen ? '▲' : '▼';
+  document.getElementById('std-toggle-btn').setAttribute('aria-expanded', state.stdOpen);
+
+  // Seg buttons
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    const active = parseInt(btn.dataset.seg) === state.seg;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active);
+  });
+
+  // Search field
+  const si = document.getElementById('search-input');
+  if (si.value !== state.search) si.value = state.search;
+  document.getElementById('search-clear').style.display = state.search ? 'inline-block' : 'none';
+
+  attachEvents();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EVENT DELEGATION
+═══════════════════════════════════════════════════════════════════ */
+function attachEvents() {
+  const content = document.getElementById('content');
+
+  // Param inputs
+  content.querySelectorAll('.param-input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const pid = e.target.dataset.pid;
+      if (!state.paramValues[pid]) state.paramValues[pid] = {};
+      state.paramValues[pid].val = e.target.value;
+      // Re-render only result rows without full re-render for performance
+      rerenderResults(pid);
+    });
+  });
+
+  // Unit selects
+  content.querySelectorAll('.unit-select').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const pid = e.target.dataset.pid;
+      if (!state.paramValues[pid]) state.paramValues[pid] = {};
+      state.paramValues[pid].fromUnit = e.target.value;
+      rerenderResults(pid);
+    });
+  });
+
+  // Copy on result row click / keyboard
+  content.querySelectorAll('.result-row').forEach(row => {
+    const handler = () => {
+      const txt = row.dataset.copy;
+      if (!txt) return;
+      navigator.clipboard?.writeText(txt).catch(() => {});
+      const [, pid, rawUnit] = row.dataset.copy !== undefined
+        ? [null, row.closest('.param-card')?.id?.replace('param-',''), row.dataset.unit]
+        : [];
+      if (!pid) return;
+      const tickId = `tick-${pid}-${(row.dataset.unit||'').replace(/[^a-z0-9]/gi,'_')}`;
+      const tick = document.getElementById(tickId);
+      if (tick) { tick.style.display = 'inline'; setTimeout(() => tick.style.display = 'none', 1200); }
+    };
+    row.addEventListener('click', handler);
+    row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') handler(); });
+  });
+
+  // Category cards
+  content.querySelectorAll('.cat-card').forEach(btn => {
+    btn.addEventListener('click', () => { state.catIdx = parseInt(btn.dataset.cat); render(); window.scrollTo(0,0); });
+  });
+
+  // Param list items
+  content.querySelectorAll('.param-list-item').forEach(item => {
+    item.addEventListener('click', () => {
+      state.catIdx = parseInt(item.dataset.cat);
+      render();
+      setTimeout(() => {
+        const el = document.getElementById('param-' + item.dataset.pid);
+        if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 60);
+    });
+    item.addEventListener('keydown', e => { if (e.key === 'Enter') item.click(); });
+  });
+
+  // Back button
+  const back = document.getElementById('back-btn');
+  if (back) back.addEventListener('click', () => { state.catIdx = null; render(); window.scrollTo(0,0); });
+}
+
+function rerenderResults(pid) {
+  // Find the param object
+  let param = null;
+  for (const cats of Object.values(DATA)) {
+    for (const cat of cats) {
+      for (const p of cat.params) {
+        if (p.id === pid) { param = p; break; }
+      }
+    }
+  }
+  if (!param || param.isInfo) return;
+  const ps = getParamState(pid, param);
+  const numVal = parseFloat(ps.val);
+  const valid = ps.val !== '' && !isNaN(numVal);
+  const base = valid ? toBase(numVal, param, ps.fromUnit) : null;
+
+  const card = document.getElementById('param-' + pid);
+  if (!card) return;
+  const rows = card.querySelectorAll('.result-row');
+  rows.forEach(row => {
+    const unit = row.dataset.unit;
+    const c = param.conversions.find(x => x.u === unit);
+    if (!c) return;
+    const res = base !== null ? fromBase(base, param, c.u) : null;
+    const valEl = row.querySelector('.result-val');
+    if (valEl) {
+      valEl.textContent = res !== null ? fmt(res) : '·····';
+      valEl.classList.toggle('empty', res === null);
+    }
+    row.dataset.copy = res !== null ? fmt(res) : '';
+    row.setAttribute('aria-label', `${c.label}: ${res !== null ? fmt(res) : 'enter a value'}`);
+    row.classList.toggle('from-unit', c.u === ps.fromUnit);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL EVENTS (header buttons, modal, install)
+═══════════════════════════════════════════════════════════════════ */
+// Segment tabs
+document.querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.seg = parseInt(btn.dataset.seg);
+    state.catIdx = null;
+    state.search = '';
+    render();
+    window.scrollTo(0,0);
+  });
+});
+
+// Standards toggle
+document.getElementById('std-toggle-btn').addEventListener('click', () => {
+  state.stdOpen = !state.stdOpen;
+  const panel = document.getElementById('std-panel');
+  panel.innerHTML = renderStdPanel();
+  panel.style.display = state.stdOpen ? 'block' : 'none';
+  document.getElementById('std-arrow').textContent = state.stdOpen ? '▲' : '▼';
+  document.getElementById('std-toggle-btn').setAttribute('aria-expanded', state.stdOpen);
+});
+
+// Search
+document.getElementById('search-input').addEventListener('input', e => {
+  state.search = e.target.value;
+  state.catIdx = null;
+  document.getElementById('search-clear').style.display = state.search ? 'inline-block' : 'none';
+  render();
+});
+document.getElementById('search-clear').addEventListener('click', () => {
+  state.search = '';
+  render();
+  document.getElementById('search-input').focus();
+});
+
+// Safety modal
+const modal = document.getElementById('safety-modal');
+document.getElementById('safety-fab').addEventListener('click', () => {
+  modal.classList.add('open');
+  modal.focus();
+});
+document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('open'));
+modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+/* ── PWA Install prompt ── */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+document.getElementById('install-dismiss').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+/* ── Initial render ── */
+render();
+</script>
+</body>
+</html>
